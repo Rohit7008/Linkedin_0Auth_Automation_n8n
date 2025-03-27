@@ -1,0 +1,230 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.unipile.com/oauth/token",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"client_id\": \"77ohytxwwem3cf\",\n  \"client_secret\": \"WPL_AP1.yXxmb6XRDhQqBeJd.cEDs6w==\",\n  \"redirect_uri\": \"http://localhost:3000/callback\",\n  \"code\": \"={{$node[\\\"Receive OAuth Code\\\"].json[\\\"code\\\"]}}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -560,
+        -280
+      ],
+      "id": "b30240f1-a2e9-4c74-ad6d-afd951dd4b26",
+      "name": "Exchange Code for Access Token"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "oauth/callback",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        -280
+      ],
+      "id": "aed0e1d1-4154-45ad-9a28-4e1af399027d",
+      "name": "Receive OAuth Code",
+      "webhookId": "01804ec8-d318-4422-b5dd-9443b80e067b"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e1ec3e05-dfbb-4dee-a651-4d05f3cb04ab",
+              "leftValue": "={{$node[\"Exchange Code for Access Token\"].json[\"access_token\"]}}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -340,
+        -280
+      ],
+      "id": "9b542ba2-b2b3-4a4c-a193-242e3fd766ff",
+      "name": "Check for Access Token"
+    },
+    {
+      "parameters": {
+        "url": "https://api.unipile.com/v1/me",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$node[\"Exchange Code for Access Token\"].json[\"access_token\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -120,
+        -380
+      ],
+      "id": "bd94cbe2-073e-4b50-8602-670412be2f64",
+      "name": "Fetch User Details"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5298d118-62a3-4b5b-a6a1-a71c62dac3b3",
+              "name": "id",
+              "value": "={{$node[\"Fetch User Details\"].json[\"id\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "f52f1c7f-9392-4dc6-bf4c-472c06ccbc18",
+              "name": "name",
+              "value": "={{$node[\"Fetch User Details\"].json[\"name\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "5f427c98-6d33-4d22-9239-71a7b7c498a3",
+              "name": "email",
+              "value": "={{$node[\"Fetch User Details\"].json[\"email\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "01e2e6fb-160f-4029-9bd3-bc6775a54551",
+              "name": "profilePicture",
+              "value": "={{$node[\"Fetch User Details\"].json[\"profilePicture\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        100,
+        -380
+      ],
+      "id": "6b9e5ed7-5bf4-4757-bd97-e547af894a69",
+      "name": "Format User Data"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$node[\"Format User Data\"].json}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        -380
+      ],
+      "id": "1b5f3d80-3387-43a3-b2e9-b18f1b0292cd",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive OAuth Code": {
+      "main": [
+        [
+          {
+            "node": "Exchange Code for Access Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exchange Code for Access Token": {
+      "main": [
+        [
+          {
+            "node": "Check for Access Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Access Token": {
+      "main": [
+        [
+          {
+            "node": "Fetch User Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch User Details": {
+      "main": [
+        [
+          {
+            "node": "Format User Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format User Data": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b2935326-3118-4774-8dc1-ef1c73710468",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ec1b488032375988a4f3e111b098bdb6cc8eac72146f9d69ac408fe436934f29"
+  },
+  "id": "eBwbDWfkBvrr5MhQ",
+  "tags": []
+}
